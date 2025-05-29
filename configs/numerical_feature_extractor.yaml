@@ -1,0 +1,17 @@
+start_date: "2004-06-11 07:00:00"
+end_date: "2004-06-12 07:00:00"
+
+paths:
+  raw_data: "E:/UT/Term8/LLM/LLMs-For-Rational-Trading/data/numerical/archive/XAU_1h_data.csv"
+  processed_data: "E:/UT/Term8/LLM/LLMs-For-Rational-Trading/data/numerical/processed_XAU_1h_data.csv"
+
+features:
+  log_return: true
+  simple_return: true
+  sma:
+    periods: [10, 20]
+  ema:
+    periods: [10, 20]
+  macd: true
+  rsi:
+    period: 14
