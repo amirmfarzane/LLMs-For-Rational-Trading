@@ -66,7 +66,7 @@ def crawl_yahoo_finance_latest(url):
         print(f"Error parsing page: {e}")
         return []
 
-def crawl_nasdaq_news(url, months=12):
+def crawl_gold_news(url, months=12):
     try:
         cutoff_date = datetime.now() - relativedelta(months=months)
         article_data = []
@@ -174,25 +174,25 @@ def save_latest_news():
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         filename = f'yahoo_finance_hero_news_{timestamp}.csv'
         db_name = 'yahoo_finance_news.db'
-        table_name = 'nasdaq_news'
+        table_name = 'all_news'
         save_to_sqlite(articles, db_name, table_name)
     else:
         logging.warning("No articles found or an error occurred.")
     time.sleep(2)
 
-def save_nasdaq_news():
-    nasdaq_url = 'https://finance.yahoo.com/quote/NQ%3DF/news/'
-    logging.info(f"Crawling NASDAQ news from {nasdaq_url}")
-    nasdaq_articles = crawl_nasdaq_news(nasdaq_url, months=6)
-    if nasdaq_articles:
+def save_gold_news():
+    gold_url = 'https://finance.yahoo.com/quote/GC=F/news/'
+    logging.info(f"Crawling GOLD news from {gold_url}")
+    gold_articles = crawl_gold_news(gold_url, months=6)
+    if gold_articles:
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         db_name = 'yahoo_finance_news.db'
-        table_name = 'nasdaq_news'
-        save_to_sqlite(nasdaq_articles, db_name, table_name)
+        table_name = 'gold_news'
+        save_to_sqlite(gold_articles, db_name, table_name)
     else:
-        logging.warning("No NASDAQ news articles found or an error occurred.")
+        logging.warning("No GOLD news articles found or an error occurred.")
     time.sleep(2)
 
 if __name__ == '__main__':
-    save_nasdaq_news()
+    save_gold_news()
     save_latest_news()
