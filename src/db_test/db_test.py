@@ -3,7 +3,7 @@ import pandas as pd
 
 
 
-db_name = "yahoo_news.db"
+db_name = "yahoo_news2.db"
 table_name = "gold_news"  # Table name is lowercase based on how it's saved in your script
 
 conn = sqlite3.connect(db_name)
