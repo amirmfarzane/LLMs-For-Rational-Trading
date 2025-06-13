@@ -1,0 +1,7 @@
+yfinance
+selenium
+gdlet
+tqdm
+re
+bs4
+requests
