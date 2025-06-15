@@ -5,3 +5,8 @@ tqdm
 re
 bs4
 requests
+python-dotenv
+langchain
+langgraph
+langchain-core
+yfinance
