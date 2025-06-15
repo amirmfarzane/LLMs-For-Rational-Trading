@@ -1,17 +1,31 @@
-start_date: "2004-06-11 07:00:00"
-end_date: "2004-06-12 07:00:00"
+start_date: "2024-01-01 07:00:00"
+end_date: "2025-01-01 07:00:00"
 
 paths:
-  raw_data: "E:/UT/Term8/LLM/LLMs-For-Rational-Trading/data/numerical/archive/XAU_1h_data.csv"
-  processed_data: "E:/UT/Term8/LLM/LLMs-For-Rational-Trading/data/numerical/processed_XAU_1h_data.csv"
+  raw_data: "E:/UT/Term8/LLM/LLMs-For-Rational-Trading/data/numerical/archive/XAU_4h_data.csv"
+  processed_data: "E:/UT/Term8/LLM/LLMs-For-Rational-Trading/data/numerical/processed_XAU_4h_data.csv"
 
 features:
   log_return: true
   simple_return: true
+
   sma:
-    periods: [10, 20]
+    periods: [10, 20, 50]
   ema:
-    periods: [10, 20]
+    periods: [10, 20, 50]
   macd: true
   rsi:
     period: 14
+  stochastic:
+    k: 14
+    d: 3
+  williams_r: 14
+  cci: 20
+  roc: 10
+  atr: 14
+  bollinger_bands: 20
+  donchian: 20
+  adx: 14
+  vortex: 14
+  obv: true
+  time_features: true
