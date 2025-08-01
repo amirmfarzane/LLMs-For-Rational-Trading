@@ -6,7 +6,7 @@ import re
 from datetime import datetime, timedelta
 import pandas as pd
 import os
-from key_word_filtering import ALL_KEYWORDS
+from src.news_query.key_word_filtering import ALL_KEYWORDS
 import logging
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -277,8 +277,8 @@ if __name__ == "__main__":
     # )
     all_dates_names = all_dates(db_name)
     existing_dates = find_existing_days(save_db_name, filtered_table, start_date, end_date)
-    fill_missing_days(existing_dates,all_dates_names,db_name,save_db_name, raw_table, filtered_table)
-    verify_coverage(save_db_name, filtered_table, all_dates_names)
+    # fill_missing_days(existing_dates,all_dates_names,db_name,save_db_name, raw_table, filtered_table)
+    verify_coverage(all_dates_names, save_db_name, filtered_table)
     # conn = sqlite3.connect("filtered_news.db")
     # cursor = conn.cursor()
     # cursor.execute(f"""
