@@ -9,5 +9,7 @@ python-dotenv
 langchain
 langgraph
 langchain-core
+langchain_community
 webdriver_manager
 openai
+duckduckgo-search

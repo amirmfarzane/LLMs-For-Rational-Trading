@@ -2,12 +2,11 @@ from langchain_core.tools import tool
 from langchain_core.runnables import RunnableConfig
 from langgraph.prebuilt import ToolNode
 import pandas as pd
-from src.news_query.full_news_extractor import get_news_content
+from langchain_community.tools import DuckDuckGoSearchResults
 
-# @tool
-def get_date_important_news(date, config):
-    """Provides a description for a specific column within a given table.
-
+@tool
+def get_date_important_news_topics(date:str, config:RunnableConfig):
+    """Provides The most important news topics for the given date
         Args:
             date: The date to get the important news from in format of YYYY-MM-DD
         Returns:
@@ -21,21 +20,20 @@ def get_date_important_news(date, config):
 
     result = []
     for _, row in matching_rows.iterrows():      
-        url = row['url']
-  
-        if not url.startswith(('http://', 'https://')):
-            url = 'https://' + url
-        try:
-            content = get_news_content(url)
-            result.append(f"URL: {url}\nContent: {content}\n{'-'*50}")
-        except Exception as e:
-            result.append(f"URL: {url}\nError fetching content: {str(e)}\n{'-'*50}")
-    
+        result.append(row["link"].split("/")[-1])
     return "\n".join(result)
 
-    
+@tool
+def search_news(query:str, config:RunnableConfig):
+    """Searches for recent news related to a query and returns the top result."""
+    search = DuckDuckGoSearchResults(backend="news", output_format="list", max_results=1)
+    results = search.run(query)
 
-print(get_date_important_news("2025-06-02", {"news_csv":"filtered_news.csv"}))
+    if not results:
+        return "No search results found."
+
+    top_result = results[0]
+    return f"{top_result['title']}\n{top_result['link']}"
 
 
-
+#TODO:(AmirMahdi) add the market state
