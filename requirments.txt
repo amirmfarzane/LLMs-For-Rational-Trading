@@ -9,4 +9,5 @@ python-dotenv
 langchain
 langgraph
 langchain-core
-yfinance
+webdriver_manager
+openai
