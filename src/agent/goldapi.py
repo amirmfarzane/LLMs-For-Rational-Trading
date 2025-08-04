@@ -38,8 +38,43 @@ def get_range_relative(
     end = date.today()
     return get_open_close_in_range(start.isoformat(), end.isoformat())
 
+import pandas as pd
 
-print(get_open_close_by_date("2025-06-11"))
-print(get_open_close_in_range("2025-06-01", "2025-06-07"))
-print(get_price_relative(1))                             
-print(get_range_relative(days_ago=2))
+def write_price_range_to_csv(start_date: str, end_date: str, filename: str = "gold_prices.csv") -> str:
+    """Fetches gold prices in a date range and writes them to a CSV file."""
+    ex_end = (date.fromisoformat(end_date) + timedelta(days=1)).isoformat()
+    df = _get_hist(start_date, ex_end)
+
+    df_out = df[["Open", "Close"]].copy()
+    df_out.index = df_out.index.date
+    df_out.reset_index(inplace=True)
+    df_out.rename(columns={"index": "Date"}, inplace=True)
+
+    df_out.to_csv(filename, index=False)
+    return f"Saved gold prices from {start_date} to {end_date} to {filename}"
+
+
+
+
+def get_open_close_in_range_from_csv(start_date: str, end_date: str, csv_path: str) -> str:
+    """Reads gold prices from CSV and returns a formatted string for the date range."""
+    df = pd.read_csv(csv_path, parse_dates=["Date"])
+
+    # Filter dates
+    mask = (df["Date"] >= pd.to_datetime(start_date)) & (df["Date"] <= pd.to_datetime(end_date))
+    df_filtered = df.loc[mask]
+
+    if df_filtered.empty:
+        return f"No gold price data found from {start_date} to {end_date}."
+
+    lines = [f"Gold prices from {start_date} to {end_date}:"]
+    for _, row in df_filtered.iterrows():
+        date_str = row["Date"].date()
+        lines.append(f"  • {date_str}: Open = {row['Open']:.2f}, Close = {row['Close']:.2f}")
+    return "\n".join(lines)
+# write_price_range_to_csv("2025-01-01", "2025-08-01", "gold_prices_2025.csv")
+# print(get_open_close_by_date("2025-06-11"))
+# print(get_open_close_in_range("2025-07-01", "2025-07-14"))
+# print(get_price_relative(1))                             
+# print(get_range_relative(days_ago=2))
+# print(get_open_close_in_range_from_csv("2025-07-01", "2025-07-14","gold_prices_2025.csv"))

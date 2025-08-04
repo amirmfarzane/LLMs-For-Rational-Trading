@@ -12,8 +12,8 @@ def get_date_important_news_topics(date:str, config:RunnableConfig):
         Returns:
             A string containing the important news of the day.
     """
-    df  = pd.read_csv(config["news_csv"])
-    matching_rows = df[df['date'] == date]
+    df  = pd.read_csv("2023.csv")
+    matching_rows = df[df['date'] == date].head(5)
 
     if matching_rows.empty:
         return f"No news found for {date}"

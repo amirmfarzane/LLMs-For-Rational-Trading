@@ -13,3 +13,4 @@ langchain_community
 webdriver_manager
 openai
 duckduckgo-search
+langchain_google_genai
