@@ -91,6 +91,12 @@ if __name__ == "__main__":
 
     chrome_options = Options()
     # chrome_options.add_argument("--headless")
+    chrome_options = Options()
+    chrome_options.add_argument("--ignore-certificate-errors")   # Ignores invalid SSL certs
+    chrome_options.add_argument("--log-level=3")                  # Suppress logs (3 = FATAL)
+    chrome_options.add_argument("--disable-logging")              # Disable logging entirely
+    chrome_options.add_argument("--disable-notifications")        # Optional: disables popups
+    chrome_options.add_experimental_option("excludeSwitches", ["enable-logging"])  # Hides DevTools warnings
     # chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-sandbox")
 
@@ -98,7 +104,7 @@ if __name__ == "__main__":
     driver = webdriver.Chrome(service=service, options=chrome_options)
     
     csv_path = "2023.csv"
-    start_date = "2025-01-01"
+    start_date = "2025-01-03"
     end_date = "2025-08-01"
     sample_per_day = 5
     initial_clusters_path = "clusters.json"
