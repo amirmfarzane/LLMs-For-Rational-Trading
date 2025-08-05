@@ -130,9 +130,25 @@ def add_time_features(df: pd.DataFrame):
     df['weekday_cos'] = np.cos(2 * np.pi * df.index.dayofweek / 7)
     return df
 
+def label_by_open_close(df: pd.DataFrame, threshold: float = 0.001) -> pd.DataFrame:
+    """
+    Labels:
+        2 → Buy (close significantly > open)
+        0 → Sell (close significantly < open)
+        1 → Neutral
+    """
+    delta = (df['close'] - df['open']) / df['open']
+    df['label'] = np.select(
+        [delta > threshold, delta < -threshold],
+        [1, 0],  # 1: Buy, 0: Sell
+        default=2  # 1: Neutral
+    )
+    return df
+
+
 
 def main():
-    config = load_config("../../configs/numerical_feature_extractor.yaml")
+    config = load_config("configs/numerical_feature_extractor.yaml")
 
     df = load_ohlcv(config['paths']['raw_data'])
     df = df.loc[config['start_date']:config['end_date']]
@@ -173,9 +189,12 @@ def main():
         df = add_time_features(df)
 
     df.dropna(inplace=True)
+
+    # ➕ Add label column
+    threshold = config.get('labeling', {}).get('threshold', 0.001)
+    df = label_by_open_close(df, threshold)
+
     df.to_csv(config['paths']['processed_data'])
     print(f"Features saved to: {config['paths']['processed_data']}")
 
-
-if __name__ == "__main__":
-    main()
+main()
