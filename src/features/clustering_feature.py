@@ -3,7 +3,6 @@ import json
 import time
 import pandas as pd
 import re
-from datetime import datetime
 from dotenv import load_dotenv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -11,17 +10,19 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 from openai import OpenAI
+from tqdm import tqdm
+
 
 load_dotenv()
-API_KEY = os.getenv("GAPGPT_API_KEY")
-os.environ["GAPGPT_API_KEY"] = API_KEY
+API_KEY = os.getenv("AVVALAI_API_KEY")
+os.environ["AVVALAI_API_KEY"] = API_KEY
 
 
 system_prompt = """You are a news classification assistant. Your job is to assign a short news article to the most relevant topic cluster.
 
 You will receive a list of existing topic clusters and a news article. You must:
-1. Assign the article to one of the existing clusters if it's relevant.
-2. If the article doesn't fit any current cluster, create a new one and assign the article to that.
+1. Assign the article to one or more of the existing clusters if it's relevant.
+2. If the article doesn't fit any current cluster, create new ones and assign the article to them.
 
 Be concise and only return the result in the specified JSON format.
 """
@@ -31,41 +32,50 @@ def build_user_prompt(news_text, clusters):
         {json.dumps(clusters, indent=2)}
 
         Here is the news article:
-        \"\"\"
+        \"\"\" 
         {news_text}
         \"\"\"
 
-        Now, decide which cluster it belongs to. If none match create a new one and assign the article to it.
-        I want the clusters to be detailed specially in the financial news. I want your title to be 4 to 5 words that describe the details of the news.
+        Now, decide which clusters it belongs to. If none match, create new ones and assign the article to them.
+        I want the clusters to be detailed especially in financial news — but not too specific. Aim for around 1000 clusters total for 200,000 news items. Prefer groupings over single events.
+        Title each cluster with 4–5 descriptive words.
+
         Return your response in this JSON format:
         {{
-        "assigned_cluster": "<assigned cluster name>",
-        }} dont type anything else"""
+          "assigned_clusters": ["<cluster name 1>", "<cluster name 2>, ..."],
+        }}
+        Only return the JSON, no explanation or extra text.
+    """
 
 
-
-def update_clusters(initial_clusters_path, clusters, assigned_cluster):
-    if assigned_cluster not in clusters:
-        clusters.append(assigned_cluster)
-        with open(initial_clusters_path, "w") as f:
-            json.dump(clusters, f, indent=2)    
+def update_clusters(initial_clusters_path, clusters, assigned_clusters):
+    new_clusters_added = False
+    for assigned_cluster in assigned_clusters:
+        if assigned_cluster not in clusters:
+            clusters.append(assigned_cluster)
+            new_clusters_added = True
+    if new_clusters_added:
+        with open(initial_clusters_path, "w", encoding="utf-8") as f:
+            json.dump(clusters, f, indent=2, ensure_ascii=False)
     return clusters
 
-def append_to_csv(csv_path, date, link, cluster):
-    new_row = pd.DataFrame([{
-        "date": date,
+def append_to_json(json_path, date, link, clusters):
+    new_entry = {
+        "date": str(date),
         "link": link,
-        "assigned_cluster": cluster
-    }])
+        "assigned_clusters": clusters
+    }
 
-    if os.path.exists(csv_path):
-        existing_df = pd.read_csv(csv_path)
-        updated_df = pd.concat([existing_df, new_row], ignore_index=True)
+    if os.path.exists(json_path):
+        with open(json_path, "r", encoding="utf-8") as f:
+            existing_data = json.load(f)
     else:
-        updated_df = new_row
+        existing_data = []
 
-    updated_df.to_csv(csv_path, index=False)
+    existing_data.append(new_entry)
 
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(existing_data, f, indent=2, ensure_ascii=False)
 
 def clean_json_response(raw_text):
     cleaned = re.sub(r"^```(?:json)?|```$", "", raw_text.strip(), flags=re.IGNORECASE)
@@ -75,24 +85,30 @@ def clean_json_response(raw_text):
 
 if __name__ == "__main__":
     client = OpenAI(
-        base_url='https://api.gapgpt.app/v1',
-        api_key=API_KEY
+        base_url="https://api.avalai.ir/v1",        
+        api_key=API_KEY,
     )
 
     chrome_options = Options()
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--disable-gpu")
+    # chrome_options.add_argument("--headless")
+    chrome_options = Options()
+    chrome_options.add_argument("--ignore-certificate-errors")   # Ignores invalid SSL certs
+    chrome_options.add_argument("--log-level=3")                  # Suppress logs (3 = FATAL)
+    chrome_options.add_argument("--disable-logging")              # Disable logging entirely
+    chrome_options.add_argument("--disable-notifications")        # Optional: disables popups
+    chrome_options.add_experimental_option("excludeSwitches", ["enable-logging"])  # Hides DevTools warnings
+    # chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-sandbox")
 
     service = Service(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=chrome_options)
     
     csv_path = "2023.csv"
-    start_date = "2023-01-01"
-    end_date = "2024-02-01"
+    start_date = "2025-01-03"
+    end_date = "2025-08-01"
     sample_per_day = 5
     initial_clusters_path = "clusters.json"
-    clustered_news_path = "clustered.csv"
+    clustered_news_path = "clustered_news.json"
     with open(initial_clusters_path, "r") as f:
         clusters = json.load(f)
 
@@ -103,8 +119,8 @@ if __name__ == "__main__":
     end = pd.to_datetime(end_date)
     date_range = pd.date_range(start=start, end=end)
 
-    for single_date in date_range:
-        day_rows = df[df["date"] == single_date].head(50) 
+    for single_date in tqdm(date_range, desc="Processing dates"):
+        day_rows = df[df["date"] == single_date].head(30) 
         if day_rows.empty:
             continue
 
@@ -123,28 +139,28 @@ if __name__ == "__main__":
                     title = "No title found"
 
                 paragraphs = driver.find_elements(By.TAG_NAME, "p")
-                paragraph_texts = [p.text.strip() for p in paragraphs[:3]]
+                paragraph_texts = [p.text.strip() for p in paragraphs[:5]]
                 news_text = f"{title}\n" + "\n".join(paragraph_texts)
 
                 user_prompt = build_user_prompt(news_text, clusters)
 
                 completion = client.chat.completions.create(
-                    model="gemini-2.0-flash",
+                    model="gpt-4o-mini-2024-07-18",
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt}
                     ],
                     temperature=1,
-                    max_tokens=30,
+                    max_tokens=100,
                     top_p=1,
                     stream=False
                 )
 
                 response_content = completion.choices[0].message.content
                 result = json.loads(clean_json_response(response_content))
-                assigned_cluster = result["assigned_cluster"]
-                clusters = update_clusters(initial_clusters_path, clusters, assigned_cluster)
-                append_to_csv(clustered_news_path, single_date.date(), link, assigned_cluster)
+                assigned_clusters = result["assigned_clusters"]
+                clusters = update_clusters(initial_clusters_path, clusters, assigned_clusters)
+                append_to_json(clustered_news_path, single_date.date(), link, assigned_clusters)
 
             except Exception as e:
                 print(f"Error processing {link}: {e}")
