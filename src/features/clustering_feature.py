@@ -3,7 +3,6 @@ import json
 import time
 import pandas as pd
 import re
-from datetime import datetime
 from dotenv import load_dotenv
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -11,10 +10,12 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from webdriver_manager.chrome import ChromeDriverManager
 from openai import OpenAI
+from tqdm import tqdm
+
 
 load_dotenv()
-API_KEY = os.getenv("GAPGPT_API_KEY")
-os.environ["GAPGPT_API_KEY"] = API_KEY
+API_KEY = os.getenv("AVVALAI_API_KEY")
+os.environ["AVVALAI_API_KEY"] = API_KEY
 
 
 system_prompt = """You are a news classification assistant. Your job is to assign a short news article to the most relevant topic cluster.
@@ -36,7 +37,7 @@ def build_user_prompt(news_text, clusters):
         \"\"\"
 
         Now, decide which cluster it belongs to. If none match create a new one and assign the article to it.
-        I want the clusters to be detailed specially in the financial news. I want your title to be 4 to 5 words that describe the details of the news.
+        I want the clusters to be detailed specially in the financial news. But not that detailed. Because there are 200000 news and i want to have 1000 clusters at most. So dont choose clusters based on single events but on group of events. For example you can seperate 4,5 wars and a cluster for famous people talking and for sanctions, oil cost change, and things like that but not like clustering as for example some specific event happened at some specific country which is not what I want. I want your title to be 4 to 5 words that describe cluster of the news.
         Return your response in this JSON format:
         {{
         "assigned_cluster": "<assigned cluster name>",
@@ -75,8 +76,8 @@ def clean_json_response(raw_text):
 
 if __name__ == "__main__":
     client = OpenAI(
-        base_url='https://api.gapgpt.app/v1',
-        api_key=API_KEY
+        base_url="https://api.avalai.ir/v1",        
+        api_key=API_KEY,
     )
 
     chrome_options = Options()
@@ -88,8 +89,8 @@ if __name__ == "__main__":
     driver = webdriver.Chrome(service=service, options=chrome_options)
     
     csv_path = "2023.csv"
-    start_date = "2023-01-01"
-    end_date = "2024-02-01"
+    start_date = "2025-01-01"
+    end_date = "2025-08-01"
     sample_per_day = 5
     initial_clusters_path = "clusters.json"
     clustered_news_path = "clustered.csv"
@@ -103,8 +104,8 @@ if __name__ == "__main__":
     end = pd.to_datetime(end_date)
     date_range = pd.date_range(start=start, end=end)
 
-    for single_date in date_range:
-        day_rows = df[df["date"] == single_date].head(50) 
+    for single_date in tqdm(date_range, desc="Processing dates"):
+        day_rows = df[df["date"] == single_date].head(30) 
         if day_rows.empty:
             continue
 
@@ -129,7 +130,7 @@ if __name__ == "__main__":
                 user_prompt = build_user_prompt(news_text, clusters)
 
                 completion = client.chat.completions.create(
-                    model="gemini-2.0-flash",
+                    model="gpt-4o-mini-2024-07-18",
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt}
