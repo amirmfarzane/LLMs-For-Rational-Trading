@@ -4,6 +4,7 @@ end_date: "2025-01-01 07:00:00"
 paths:
   raw_data: "E:/UT/Term8/LLM/LLMs-For-Rational-Trading/data/numerical/archive/XAU_1d_data.csv"
   processed_data: "E:/UT/Term8/LLM/LLMs-For-Rational-Trading/data/numerical/processed_XAU_1d_data.csv"
+  evaluation: "E:/UT/Term8/LLM/LLMs-For-Rational-Trading/data/numerical/evaluation_XAU_1d_data.csv"
 
 features:
   log_return: true
@@ -29,3 +30,8 @@ features:
   vortex: 14
   obv: true
   time_features: true
+
+  strategy_short_window: 10
+  strategy_long_window: 30
+  strategy_rsi_threshold: 30
+
