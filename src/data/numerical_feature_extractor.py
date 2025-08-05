@@ -296,6 +296,9 @@ def evaluate_all_strategies(df: pd.DataFrame, short_win=10, long_win=30, rsi_thr
         [2, 1], default=0
     )
 
+    # strategy_df['open'] = df['open']
+    # strategy_df['close'] = df['close']
+
     return strategy_df
 
 
@@ -373,6 +376,9 @@ def main():
     config = load_config("configs/numerical_feature_extractor.yaml")
 
     evaluation_df = evaluate_all_strategies(df, short_win=10, long_win=30, rsi_thresh=30)
+
+    evaluation_df['open'] = df['open']
+    evaluation_df['close'] = df['close']
     evaluation_df.to_csv(config['paths']['evaluation'])
     print(f"Features and strategies saved to: {config['paths']['evaluation']}")
 
