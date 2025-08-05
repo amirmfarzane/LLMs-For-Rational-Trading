@@ -5,9 +5,10 @@ from langgraph.prebuilt import tools_condition
 from langchain_core.messages import HumanMessage
 from typing_extensions import TypedDict
 from src.agent.tools import *
-from src.agent.goldapi import get_open_close_in_range_from_csv
+from src.agent.goldapi import get_technical_indicators_in_range_from_csv
 from pydantic import BaseModel
 from typing import List, Literal
+import yaml
 
 class TradeStrategy(BaseModel):
     date: str  # e.g., "2025-07-01"
@@ -57,7 +58,7 @@ class ConfigSchema(TypedDict):
 class GoldTradingAgent:
     def __init__(self):
         self.api_key = os.getenv("GEMINI_API_KEY")
-        os.environ["GOOGLE_API_KEY"] = self.api_key
+        os.environ["GOOGLE_API_KEY"] = "sk-JM2RhgZ0floDyQxl2gECMIQI2v4QZX3mP33nKg4u24mPFOCC"
         self.llm = ChatGoogleGenerativeAI(
             model="gemini-2.5-flash-preview-05-20",
             temperature=1,
@@ -83,23 +84,37 @@ class GoldTradingAgent:
         self.react_graph = self.react_builder.compile()
 
     def run(self, start_date: str, end_date: str, news_csv: str, gold_prices_csv: str) -> StrategyOutput:
-        user_prompt = f"""Predict the trade strategy in a week for gold stock market given the information and data you have.
-                Give a full explanation why you decide on this strategy.
-                Your strategy should be list of buy,sell or wait for each day.\n
-                REMBEMBER THE FORMAT:
+        user_prompt = user_prompt = f"""
+                You are a trading assistant. Based on the daily technical indicators and gold price open/close values, decide whether the strategy for each day is:
+                - 2 → Buy
+                - 1 → Sell
+                - 0 → Neutral (Wait)
+
+                Use these indicators to help you:
+                - **SMA & EMA crossover**: Buy if short > long, Sell if short < long.
+                - **MACD**: Buy if MACD > Signal, Sell if MACD < Signal.
+                - **RSI**: Buy if RSI < 30, Sell if RSI > 70.
+                - **Bollinger Bands**: Buy if close < lower band, Sell if close > upper band.
+                - **Stochastic Oscillator**: Buy if %K < 20 and rising above %D, Sell if %K > 80 and falling below %D.
+
+                Give your answer in this format:
                 {{
-                  "explanation": "A detailed explanation of the strategy and reasoning goes here.",
-                  "strategy": [
-                    {{"date": "2020-01-01", "action": "buy"}},
-                    {{"date": "2020-01-02", "action": "wait"}},
-                    {{"date": "2020-01-03", "action": "sell"}}
-                    // ...continue for the rest of the days
-                  ]
-                }}\n
-                Gold prices in the past two weeks:\n
-                {get_open_close_in_range_from_csv(start_date, end_date, gold_prices_csv)}\n
-                GIVE THE STRATEGY.
+                "explanation": "A detailed explanation of how indicators influenced your strategy.",
+                "strategy": [
+                    {{"date": "2020-01-01", "action": 2}},
+                    {{"date": "2020-01-02", "action": 0}},
+                    {{"date": "2020-01-03", "action": 1}}
+                    // ... continue for all days
+                ]
+                }}
+
+                Here is the input data:
+
+                {get_technical_indicators_in_range_from_csv(start_date, end_date, gold_prices_csv)}
                 """
+
+        
+        breakpoint()
         input_msg = HumanMessage(content=user_prompt)
         input_config = {"configurable": {"news_csv": news_csv}}
 
@@ -109,13 +124,14 @@ class GoldTradingAgent:
         final_response = response["messages"][-1].content
         return StrategyOutput.model_validate_json(final_response)  
       
-  
+def load_config(path: str) -> dict:
+    with open(path, 'r') as f:
+        return yaml.safe_load(f)
   
 if __name__ == "__main__":
     agent = GoldTradingAgent()
-    start_date = "2025-07-01"
-    end_date = "2025-07-07"
+    config = load_config("configs/numerical_feature_extractor.yaml")
+    
     news_csv = "2023.csv"
-    gold_prices_csv = "gold_prices_2025.csv"
-    strategy_output = agent.run(start_date, end_date, news_csv, gold_prices_csv)
+    strategy_output = agent.run(config['start_date'], config['end_date'], news_csv, config['paths']['evaluation'])
     print("hello")
