@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 import os 
 from langchain_openai import ChatOpenAI
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import MessagesState, StateGraph, START
 from langgraph.prebuilt import tools_condition
 from langchain_core.messages import HumanMessage
@@ -52,7 +51,7 @@ When you are ready to provide the final answer, you MUST output it in the follow
     // ...continue for the rest of the days
   ]
 }
-GET THE NEWS TOPICS ONLY FOR THE LAST 3 DAYS NOT ALL THE INTERVAL.
+GET THE NEWS TOPICS ONLY FOR THE LAST 3 DAYS NOT ALL THE INTERVAL. USE ALL THE TOOLS PROVIDED TO YOU.
 The strategy must be a list of actions (buy, sell, or wait) for each day in the given date range. Each action must be mapped to the correct date.
 """
 
@@ -62,13 +61,14 @@ class ConfigSchema(TypedDict):
 class GoldTradingAgent:
     def __init__(self):
         self.api_key = os.getenv("AVVALAI_API_KEY")
-        os.environ["OPENAI_ORGANIZATION"] = self.api_key
+        os.environ["OPENAI_API_KEY"] = self.api_key
         self.llm = ChatOpenAI(
             model="gpt-4o-mini-2024-07-18",
-            http_client=httpx.Client(proxies="https://api.avalai.ir/v1"),
+            base_url = "https://api.avalai.ir/v1",
             temperature=1,
             max_tokens=5000,
         )
+        self.llm = self.llm.bind_tools([search_news, get_date_important_news_topics])
             
         def agent_node(state: MessagesState) -> MessagesState:   
             msg_history = state["messages"]
@@ -77,7 +77,6 @@ class GoldTradingAgent:
             return {"messages": msg_history}
 
         tools_node = ToolNode(tools=[search_news, get_date_important_news_topics])
-        self.llm = self.llm.bind_tools([search_news, get_date_important_news_topics])
 
         self.react_builder = StateGraph(MessagesState, config_schema=ConfigSchema)
         self.react_builder.add_node("agent", agent_node)
