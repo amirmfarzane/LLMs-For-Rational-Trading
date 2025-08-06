@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
-import os 
+import os
+import re 
 from langchain_openai import ChatOpenAI
 from langgraph.graph import MessagesState, StateGraph, START
 from langgraph.prebuilt import tools_condition
@@ -28,7 +29,7 @@ You MUST iterate and keep going until the problem is solved.
 Only terminate your turn when you are sure that the problem is solved. Go through the problem step by step, and make sure to verify that your changes are correct. NEVER end your turn without having solved the problem, and when you say you are going to make a tool call, make sure you ACTUALLY make the tool call, instead of ending your turn.
 THE PROBLEM CAN DEFINITELY BE SOLVED WITHOUT THE INTERNET.
 If after using a tool you still need more information use more of the tools provided
-On your Final answer give the final sell, buy, and wait state list for the asked range of days given the user prompt if you dont want to use a tool anymore
+On your Final answer give the final sell, buy, and wait state list for just next day after last day gave you
 # Workflow
 
 ## High-Level Problem Solving Strategy
@@ -38,18 +39,14 @@ On your Final answer give the final sell, buy, and wait state list for the asked
 3. Use the given tools carefully. They can provide you really good information.
 4. On your Final answer give the final sell, buy, and wait for the given range of days to trade in the gold stock market.
 
+
 # Output Format
 
 When you are ready to provide the final answer, you MUST output it in the following exact JSON format:
 
 {
   "explanation": "A detailed explanation of the strategy and reasoning goes here.",
-  "strategy": [
-    {"date": "2025-07-01", "action": "buy"},
-    {"date": "2025-07-02", "action": "wait"},
-    {"date": "2025-07-03", "action": "sell"}
-    // ...continue for the rest of the days
-  ]
+  "action":Based on the data from all the days provided, determine the action (buy, sell, or wait) for the single day immediately following the last given date
 }
 GET THE NEWS TOPICS ONLY FOR THE LAST 3 DAYS NOT ALL THE INTERVAL. USE ALL THE TOOLS PROVIDED TO YOU.
 The strategy must be a list of actions (buy, sell, or wait) for each day in the given date range. Each action must be mapped to the correct date.
@@ -61,7 +58,7 @@ class ConfigSchema(TypedDict):
 class GoldTradingAgent:
     def __init__(self):
         self.api_key = os.getenv("AVVALAI_API_KEY")
-        os.environ["OPENAI_API_KEY"] = self.api_key
+        os.environ["OPENAI_API_KEY"] = "aa-Cr5DZypaOeey1gAOE4HSrkTUe9apD6Xl8vnvq65Yk8INbaSG"
         self.llm = ChatOpenAI(
             model="gpt-4o-mini-2024-07-18",
             base_url = "https://api.avalai.ir/v1",
@@ -89,7 +86,7 @@ class GoldTradingAgent:
 
     def run(self, start_date: str, end_date: str, news_csv: str, gold_prices_csv: str) -> StrategyOutput:
         user_prompt = user_prompt = f"""
-                You are a trading assistant. Based on the daily technical indicators and gold price open/close values, decide whether the strategy for each day is:
+                You are a trading assistant. Based on the daily technical indicators and gold price open/close values, decide whether the strategy for future day is:
                 - 2 → Buy
                 - 1 → Sell
                 - 0 → Neutral (Wait)
@@ -104,12 +101,7 @@ class GoldTradingAgent:
                 Give your answer in this format:
                 {{
                 "explanation": "A detailed explanation of how indicators influenced your strategy.",
-                "strategy": [
-                    {{"date": "2020-01-01", "action": 2}},
-                    {{"date": "2020-01-02", "action": 0}},
-                    {{"date": "2020-01-03", "action": 1}}
-                    // ... continue for all days
-                ]
+                "action":Based on the data from all the days provided, determine the action (buy, sell, or wait) for the single day immediately following the last given date
                 }}
 
                 Here is the input data:
@@ -124,15 +116,19 @@ class GoldTradingAgent:
         for msg in response["messages"]:
             msg.pretty_print()
         final_response = response["messages"][-1].content
-        return StrategyOutput.model_validate_json(final_response)  
+        return final_response
       
 def load_config(path: str) -> dict:
     with open(path, 'r') as f:
         return yaml.safe_load(f)
 
 def get_action_from_prompt(prompt):
-    ####TODO####
-    pass
+    match = re.search(r'"action"\s*:\s*(\d+)', prompt)
+    if match:
+        return int(match.group(1))
+    else:
+        print("Action not found.")
+        return -1
 
 def choose_actions(agent, config, news_csv, price_df, lookback):
     """
@@ -147,22 +143,16 @@ def choose_actions(agent, config, news_csv, price_df, lookback):
 
     current_date = datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S") + timedelta(days=lookback)
     end_date_dt = datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S")
-
     while current_date <= end_date_dt:
         lookback_start = current_date - timedelta(days=lookback)
         lb_start_str = lookback_start.strftime("%Y-%m-%d")
         current_str = current_date.strftime("%Y-%m-%d")
-
-        try:
-            action = get_action_from_prompt(agent.run(lb_start_str, current_str, news_csv, config['paths']['evaluation']))
-        except:
-            action = random.randint(0, 2)
+        action = get_action_from_prompt(agent.run(lb_start_str, current_str, news_csv, config['paths']['evaluation']))
 
         actions.append(action)
         dates.append(current_str)
 
         current_date += timedelta(days=1)
-
     # Create result DataFrame
     result_df = pd.DataFrame({
         'date': dates,
