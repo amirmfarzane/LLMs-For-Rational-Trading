@@ -3,3 +3,6 @@ data/numerical/archive/
 **/__pycache__/
 *.log
 gdelt_data.db
+.env
+*.json
+*.csv

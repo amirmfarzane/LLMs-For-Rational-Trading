@@ -37,8 +37,8 @@ def build_user_prompt(news_text, clusters):
         \"\"\"
 
         Now, decide which clusters it belongs to. If none match, create new ones and assign the article to them.
-        I want the clusters to be detailed especially in financial news — but not too specific. Aim for around 1000 clusters total for 200,000 news items. Prefer groupings over single events.
-        Title each cluster with 4–5 descriptive words.
+        I want the clusters to be detailed especially in financial news — but not too specific. Aim for around 1000 clusters total for 200,000 news items.
+        Title each cluster with 4–5 descriptive words. Dont create clusters with multiple subjects like "financial and econimics". Each cluster should focus on a single topic. Try as much as possible to use the existing clusters, but if the article is not relevant to any of them, create new clusters. DONT GO FOR NEW CLUSTERS UNLESS YOU ARE REALLY NEEDED.
 
         Return your response in this JSON format:
         {{
@@ -104,7 +104,7 @@ if __name__ == "__main__":
     driver = webdriver.Chrome(service=service, options=chrome_options)
     
     csv_path = "2023.csv"
-    start_date = "2025-01-03"
+    start_date = "2025-04-02"
     end_date = "2025-08-01"
     sample_per_day = 5
     initial_clusters_path = "clusters.json"
@@ -120,7 +120,7 @@ if __name__ == "__main__":
     date_range = pd.date_range(start=start, end=end)
 
     for single_date in tqdm(date_range, desc="Processing dates"):
-        day_rows = df[df["date"] == single_date].head(30) 
+        day_rows = df[df["date"] == single_date].head(20) 
         if day_rows.empty:
             continue
 
