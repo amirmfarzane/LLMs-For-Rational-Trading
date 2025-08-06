@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 import os 
+from langchain_openai import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import MessagesState, StateGraph, START
 from langgraph.prebuilt import tools_condition
@@ -11,6 +12,7 @@ from pydantic import BaseModel
 from typing import List, Literal
 import yaml
 import random
+import httpx
 
 class TradeStrategy(BaseModel):
     date: str  # e.g., "2025-07-01"
@@ -59,14 +61,15 @@ class ConfigSchema(TypedDict):
 
 class GoldTradingAgent:
     def __init__(self):
-        self.api_key = os.getenv("GEMINI_API_KEY")
-        os.environ["GOOGLE_API_KEY"] = self.api_key
-        self.llm = ChatGoogleGenerativeAI(
-            model="gemini-2.5-flash-preview-05-20",
+        self.api_key = os.getenv("AVVALAI_API_KEY")
+        os.environ["OPENAI_ORGANIZATION"] = self.api_key
+        self.llm = ChatOpenAI(
+            model="gpt-4o-mini-2024-07-18",
+            http_client=httpx.Client(proxies="https://api.avalai.ir/v1"),
             temperature=1,
             max_tokens=5000,
         )
-
+            
         def agent_node(state: MessagesState) -> MessagesState:   
             msg_history = state["messages"]
             new_msg = self.llm.invoke([REACT_SYS_PROMPT] + msg_history)
