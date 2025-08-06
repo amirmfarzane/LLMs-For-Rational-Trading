@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import os 
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import MessagesState, StateGraph, START
@@ -5,9 +6,11 @@ from langgraph.prebuilt import tools_condition
 from langchain_core.messages import HumanMessage
 from typing_extensions import TypedDict
 from src.agent.tools import *
-from src.agent.goldapi import get_open_close_in_range_from_csv
+from src.agent.goldapi import get_technical_indicators_in_range_from_csv
 from pydantic import BaseModel
 from typing import List, Literal
+import yaml
+import random
 
 class TradeStrategy(BaseModel):
     date: str  # e.g., "2025-07-01"
@@ -83,23 +86,35 @@ class GoldTradingAgent:
         self.react_graph = self.react_builder.compile()
 
     def run(self, start_date: str, end_date: str, news_csv: str, gold_prices_csv: str) -> StrategyOutput:
-        user_prompt = f"""Predict the trade strategy in a week for gold stock market given the information and data you have.
-                Give a full explanation why you decide on this strategy.
-                Your strategy should be list of buy,sell or wait for each day.\n
-                REMBEMBER THE FORMAT:
+        user_prompt = user_prompt = f"""
+                You are a trading assistant. Based on the daily technical indicators and gold price open/close values, decide whether the strategy for each day is:
+                - 2 → Buy
+                - 1 → Sell
+                - 0 → Neutral (Wait)
+
+                Use these indicators to help you:
+                - **SMA & EMA crossover**: Buy if short > long, Sell if short < long.
+                - **MACD**: Buy if MACD > Signal, Sell if MACD < Signal.
+                - **RSI**: Buy if RSI < 30, Sell if RSI > 70.
+                - **Bollinger Bands**: Buy if close < lower band, Sell if close > upper band.
+                - **Stochastic Oscillator**: Buy if %K < 20 and rising above %D, Sell if %K > 80 and falling below %D.
+
+                Give your answer in this format:
                 {{
-                  "explanation": "A detailed explanation of the strategy and reasoning goes here.",
-                  "strategy": [
-                    {{"date": "2020-01-01", "action": "buy"}},
-                    {{"date": "2020-01-02", "action": "wait"}},
-                    {{"date": "2020-01-03", "action": "sell"}}
-                    // ...continue for the rest of the days
-                  ]
-                }}\n
-                Gold prices in the past two weeks:\n
-                {get_open_close_in_range_from_csv(start_date, end_date, gold_prices_csv)}\n
-                GIVE THE STRATEGY.
+                "explanation": "A detailed explanation of how indicators influenced your strategy.",
+                "strategy": [
+                    {{"date": "2020-01-01", "action": 2}},
+                    {{"date": "2020-01-02", "action": 0}},
+                    {{"date": "2020-01-03", "action": 1}}
+                    // ... continue for all days
+                ]
+                }}
+
+                Here is the input data:
+
+                {get_technical_indicators_in_range_from_csv(start_date, end_date, gold_prices_csv)}
                 """
+
         input_msg = HumanMessage(content=user_prompt)
         input_config = {"configurable": {"news_csv": news_csv}}
 
@@ -109,13 +124,112 @@ class GoldTradingAgent:
         final_response = response["messages"][-1].content
         return StrategyOutput.model_validate_json(final_response)  
       
-  
+def load_config(path: str) -> dict:
+    with open(path, 'r') as f:
+        return yaml.safe_load(f)
+
+def get_action_from_prompt(prompt):
+    ####TODO####
+    pass
+
+def choose_actions(agent, config, news_csv, price_df, lookback):
+    """
+    Runs agent for each day using a rolling lookback window,
+    gets decisions, and evaluates them based on next day's price movement.
+    """
+    start_date = config['start_date']
+    end_date = config['end_date']
+
+    actions = []
+    dates = []
+
+    current_date = datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S") + timedelta(days=lookback)
+    end_date_dt = datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S")
+
+    while current_date <= end_date_dt:
+        lookback_start = current_date - timedelta(days=lookback)
+        lb_start_str = lookback_start.strftime("%Y-%m-%d")
+        current_str = current_date.strftime("%Y-%m-%d")
+
+        try:
+            action = get_action_from_prompt(agent.run(lb_start_str, current_str, news_csv, config['paths']['evaluation']))
+        except:
+            action = random.randint(0, 2)
+
+        actions.append(action)
+        dates.append(current_str)
+
+        current_date += timedelta(days=1)
+
+    # Create result DataFrame
+    result_df = pd.DataFrame({
+        'date': dates,
+        'final_decision': actions
+    })
+
+    # Merge with price_df to get open/close prices
+    return pd.merge(result_df, price_df[['date', 'open', 'close']], on='date', how='left')
+
+def evaluate_actions(merged_df):
+    # Evaluate performance using next day's open/close
+    profits = []
+    for i in range(len(merged_df) - 1):
+        action = merged_df.loc[i, 'final_decision']
+        next_open = merged_df.loc[i + 1, 'open']
+        next_close = merged_df.loc[i + 1, 'close']
+
+        if action == 2:  # Buy
+            profit = next_close - next_open
+        elif action == 1:  # Sell
+            profit = next_open - next_close
+        else:
+            profit = 0.0
+
+        profits.append(profit)
+
+    profits.append(0.0)  # No next day for the last row
+    merged_df['profit'] = profits
+    merged_df['cumulative_profit'] = merged_df['profit'].cumsum()
+    merged_df = merged_df.dropna()
+
+    # Calculate statistics
+    total_profit = merged_df['profit'].sum()
+    buy_profit = merged_df.loc[merged_df['final_decision'] == 2, 'profit'].sum()
+    sell_profit = merged_df.loc[merged_df['final_decision'] == 1, 'profit'].sum()
+    num_nans = merged_df.isna().sum().sum()  # total number of NaN values in all columns
+
+    # Calculate statistics
+    total_profit = merged_df['profit'].sum()
+    buy_profit = merged_df.loc[merged_df['final_decision'] == 2, 'profit'].sum()
+    sell_profit = merged_df.loc[merged_df['final_decision'] == 1, 'profit'].sum()
+    num_nans = merged_df.isna().sum().sum()  # total NaN cells
+    num_valid_rows = merged_df.dropna().shape[0]  # fully valid rows
+
+    # Print stats
+    print(f"Total Profit: {total_profit:.2f}")
+    print(f"Buy Profit: {buy_profit:.2f}")
+    print(f"Sell Profit: {sell_profit:.2f}")
+    print(f"Total NaNs in DataFrame: {num_nans}")
+    print(f"Rows without any NaNs: {num_valid_rows}")
+
+
+def run_pipline():
+    agent = GoldTradingAgent()
+    config = load_config("configs/numerical_feature_extractor.yaml")
+    
+    news_csv = "2023.csv"
+    lookback = 7
+
+    price_df = pd.read_csv(config['paths']['evaluation'])  # must include date, open, close
+
+    df = choose_actions(agent, config, news_csv, price_df, lookback)
+    evaluate_actions(df)
   
 if __name__ == "__main__":
+    
     agent = GoldTradingAgent()
-    start_date = "2025-07-01"
-    end_date = "2025-07-07"
+    config = load_config("configs/numerical_feature_extractor.yaml")
+    
     news_csv = "2023.csv"
-    gold_prices_csv = "gold_prices_2025.csv"
-    strategy_output = agent.run(start_date, end_date, news_csv, gold_prices_csv)
+    strategy_output = agent.run(config['start_date'], config['end_date'], news_csv, config['paths']['evaluation'])
     print("hello")

@@ -54,24 +54,42 @@ def write_price_range_to_csv(start_date: str, end_date: str, filename: str = "go
     return f"Saved gold prices from {start_date} to {end_date} to {filename}"
 
 
-
-
-def get_open_close_in_range_from_csv(start_date: str, end_date: str, csv_path: str) -> str:
-    """Reads gold prices from CSV and returns a formatted string for the date range."""
-    df = pd.read_csv(csv_path, parse_dates=["Date"])
-
-    # Filter dates
-    mask = (df["Date"] >= pd.to_datetime(start_date)) & (df["Date"] <= pd.to_datetime(end_date))
+def safe_float_format(value, ndigits=2, default='N/A'):
+    return f"{float(value):.{ndigits}f}"
+    
+def get_technical_indicators_in_range_from_csv(start_date: str, end_date: str, csv_path: str) -> str:
+    """Reads indicator-enhanced CSV and returns a formatted string of daily strategy signals."""
+    df = pd.read_csv(csv_path, parse_dates=["date"])
+    mask = (df["date"] >= pd.to_datetime(start_date)) & (df["date"] <= pd.to_datetime(end_date))
     df_filtered = df.loc[mask]
 
     if df_filtered.empty:
-        return f"No gold price data found from {start_date} to {end_date}."
+        return f"No technical indicator data found from {start_date} to {end_date}."
 
-    lines = [f"Gold prices from {start_date} to {end_date}:"]
+    lines = [f"Technical strategy signals from {start_date} to {end_date}:\n"]
     for _, row in df_filtered.iterrows():
-        date_str = row["Date"].date()
-        lines.append(f"  • {date_str}: Open = {row['Open']:.2f}, Close = {row['Close']:.2f}")
+        date = row["date"].date()
+        line = (
+            f"  • {date}: "
+            f"open = {row['open']:.2f}, close = {row['close']:.2f}, "
+            f"sma_cross = {row['sma_cross']}, "
+            f"ema_cross = {row['ema_cross']}, "
+            f"rsi_signal = {row['rsi_signal']}, "
+            f"macd_signal = {row['macd_signal']}, "
+            f"bollinger_signal = {row['bollinger_signal']}, "
+            f"stoch_signal = {row['stoch_signal']}, "
+            f"williams_signal = {row['williams_signal']}, "
+            f"cci_signal = {row['cci_signal']}, "
+            f"roc_signal = {row['roc_signal']}, "
+            f"adx_trend = {row['adx_trend']}, "
+            f"vortex_signal = {row['vortex_signal']}, "
+            f"obv_signal = {row['obv_signal']}, "
+            f"final_decision = {row['final_decision']}"
+        )
+        lines.append(line)
+
     return "\n".join(lines)
+
 # write_price_range_to_csv("2025-01-01", "2025-08-01", "gold_prices_2025.csv")
 # print(get_open_close_by_date("2025-06-11"))
 # print(get_open_close_in_range("2025-07-01", "2025-07-14"))
