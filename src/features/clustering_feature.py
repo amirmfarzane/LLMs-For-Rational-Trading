@@ -104,8 +104,8 @@ if __name__ == "__main__":
     driver = webdriver.Chrome(service=service, options=chrome_options)
     
     csv_path = "2023.csv"
-    start_date = "2025-04-02"
-    end_date = "2025-08-01"
+    start_date = "2025-06-10"
+    end_date = "2025-06-30"
     sample_per_day = 5
     initial_clusters_path = "clusters.json"
     clustered_news_path = "clustered_news.json"
@@ -131,7 +131,7 @@ if __name__ == "__main__":
 
             try:
                 driver.get(link)
-                time.sleep(2)
+                time.sleep(0.5)  # Wait for the page to load
                 try:
                     title_elem = driver.find_element(By.XPATH, '//h1[@class="article-title" and @id="articleTitle"]')
                     title = title_elem.text.strip()

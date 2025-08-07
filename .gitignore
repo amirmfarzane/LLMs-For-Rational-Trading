@@ -6,3 +6,4 @@ gdelt_data.db
 .env
 *.json
 *.csv
+clusters.json
