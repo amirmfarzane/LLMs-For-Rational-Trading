@@ -55,11 +55,15 @@ def choose_actions(agent, config):
         'final_decision': actions
     })
 
+
+    result_df = pd.merge(result_df, price_df[['date', 'open', 'close']], on='date', how='left')
+
+    
     with open('result_df.pkl', 'wb') as f:
         pickle.dump(result_df, f)
 
     # Merge with price_df to get open/close prices
-    return pd.merge(result_df, price_df[['date', 'open', 'close']], on='date', how='left')
+    return result_df
 
 def evaluate_actions(merged_df):
     # Evaluate performance using next day's open/close

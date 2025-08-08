@@ -1,16 +1,16 @@
 hyps:
-  lookback: 14
+  lookback: 30
 
 dates:
-  start_date: "2025-01-02 07:00:00"
-  end_date: "2025-01-16 07:00:00"
+  start_date: "2025-03-18 07:00:00"
+  end_date: "2025-07-29 07:00:00"
 
 
 paths:
-  raw_data: "data/numerical/gold_prices_ohlcv.csv"
-  processed_data: "data/numerical/processed_XAU_1d_data.csv"
-  evaluation: "data/numerical/strategies_XAU_1d_data.csv"
-  news: "data/numerical/2025.csv"
+  raw_data: "data/news_topicgold_prices_ohlcv.csv"
+  processed_data: "data/news_topicprocessed_XAU_1d_data.csv"
+  evaluation: "data/news_topicstrategies_XAU_1d_data.csv"
+  news: "data/news_topic2025.csv"
 
 numerical_features:
   log_return: true
