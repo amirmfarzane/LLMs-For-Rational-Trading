@@ -7,10 +7,10 @@ dates:
 
 
 paths:
-  raw_data: "data/news_topicgold_prices_ohlcv.csv"
-  processed_data: "data/news_topicprocessed_XAU_1d_data.csv"
-  evaluation: "data/news_topicstrategies_XAU_1d_data.csv"
-  news: "data/news_topic2025.csv"
+  raw_data: "data/gold_prices_ohlcv.csv"
+  processed_data: "data/processed_XAU_1d_data.csv"
+  evaluation: "data/strategies_XAU_1d_data.csv"
+  news: "data/2025.csv"
 
 numerical_features:
   log_return: true
