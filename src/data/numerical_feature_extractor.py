@@ -373,7 +373,7 @@ def calc_strategies_features():
 
 def main():
     df = calc_strategies_features()
-    config = load_config("configs/numerical_feature_extractor.yaml")
+    config = load_config("configs/run_pipeline.yaml")
 
     evaluation_df = evaluate_all_strategies(df, short_win=10, long_win=30, rsi_thresh=30)
 

@@ -1,11 +1,11 @@
-start_date: "2024-10-01 07:00:00"
-start_date: "2024-03-11 07:00:00"
-end_date: "2025-01-01 07:00:00"
+start_date: "2025-01-02 07:00:00"
+end_date: "2025-08-01 07:00:00"
 
 paths:
-  raw_data: "data/numerical/archive/XAU_1d_data.csv"
+  raw_data: "data/numerical/gold_prices_ohlcv.csv"
   processed_data: "data/numerical/processed_XAU_1d_data.csv"
   evaluation: "data/numerical/strategies_XAU_1d_data.csv"
+  texts: "data/numerical/2025.csv"
 
 features:
   log_return: true
