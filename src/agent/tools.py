@@ -12,7 +12,8 @@ def get_date_important_news_topics(date:str, config:RunnableConfig):
         Returns:
             A string containing the important news of the day.
     """
-    df  = pd.read_csv("2023.csv")
+    csv_path = config["configurable"].get("news_path")
+    df  = pd.read_csv(csv_path)
     matching_rows = df[df['date'] == date].head(5)
 
     if matching_rows.empty:
@@ -24,10 +25,17 @@ def get_date_important_news_topics(date:str, config:RunnableConfig):
     return "\n".join(result)
 
 @tool
-def search_news(query:str, config:RunnableConfig):
-    """Searches for recent news related to a query and returns the top result."""
+def search_web__for_news_topic(news_topic:str, config:RunnableConfig):
+    """Searches for recent news related to a news_topic and returns the top result.
+        Args:
+            news_topic: generated news topic  
+        Returns:
+            A string containing the content of the search news.
+    
+    """
+    breakpoint()
     search = DuckDuckGoSearchResults(backend="news", output_format="list", max_results=1)
-    results = search.run(query)
+    results = search.run(news_topic)
 
     if not results:
         return "No search results found."

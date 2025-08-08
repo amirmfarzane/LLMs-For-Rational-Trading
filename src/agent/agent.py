@@ -57,15 +57,17 @@ class ConfigSchema(TypedDict):
 
 class GoldTradingAgent:
     def __init__(self):
-        self.api_key = os.getenv("AVVALAI_API_KEY")
-        os.environ["OPENAI_API_KEY"] = "aa-Cr5DZypaOeey1gAOE4HSrkTUe9apD6Xl8vnvq65Yk8INbaSG"
+        from dotenv import load_dotenv
+
+        load_dotenv()
+        os.environ["OPENAI_API_KEY"] = os.getenv("AVVALAI_API_KEY")
         self.llm = ChatOpenAI(
             model="gpt-4o-mini-2024-07-18",
             base_url = "https://api.avalai.ir/v1",
             temperature=1,
             max_tokens=5000,
         )
-        self.llm = self.llm.bind_tools([search_news, get_date_important_news_topics])
+        self.llm = self.llm.bind_tools([search_web__for_news_topic, get_date_important_news_topics])
             
         def agent_node(state: MessagesState) -> MessagesState:   
             msg_history = state["messages"]
@@ -73,7 +75,7 @@ class GoldTradingAgent:
             msg_history.append(new_msg)
             return {"messages": msg_history}
 
-        tools_node = ToolNode(tools=[search_news, get_date_important_news_topics])
+        tools_node = ToolNode(tools=[search_web__for_news_topic, get_date_important_news_topics])
 
         self.react_builder = StateGraph(MessagesState, config_schema=ConfigSchema)
         self.react_builder.add_node("agent", agent_node)
@@ -107,10 +109,13 @@ class GoldTradingAgent:
                 Here is the input data:
 
                 {get_technical_indicators_in_range_from_csv(start_date, end_date, numerical_csv)}
+                
+                ALWAYS USE ALL THE TOOLS ALSO SEARCH THE WEB FOR GETTING NEWS CONTENT
+                USE LAST THREE DAYS NEWS
                 """
 
         input_msg = HumanMessage(content=user_prompt)
-        input_config = {"configurable": {"news_csv": news_csv}}
+        input_config = {"configurable": {"news_path": news_csv}}
 
         response = self.react_graph.invoke(MessagesState(messages=[input_msg]), config=input_config)
         for msg in response["messages"]:

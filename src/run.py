@@ -12,14 +12,14 @@ def get_action_from_prompt(prompt):
         print("Action not found.")
         return -1
 
-def choose_actions(agent, config, price_df, lookback):
+def choose_actions(agent, config):
     """
     Runs agent for each day using a rolling lookback window,
     gets decisions, and evaluates them based on next day's price movement.
     """
     start_date = config["dates"]['start_date']
     end_date = config["dates"]['end_date']
-    texts_csv_path = config['paths']['texts']
+    news_csv_path = config['paths']['news']
     numerical_csv_path = config['paths']['evaluation']
     lookback = config["hyps"]["lookback"]
     price_df = pd.read_csv(config['paths']['evaluation'])
@@ -34,7 +34,7 @@ def choose_actions(agent, config, price_df, lookback):
         lookback_start = current_date - timedelta(days=lookback)
         lb_start_str = lookback_start.strftime("%Y-%m-%d")
         current_str = current_date.strftime("%Y-%m-%d")
-        model_response = agent.run(lb_start_str, current_str, texts_csv_path, numerical_csv_path)
+        model_response = agent.run(lb_start_str, current_str, news_csv_path, numerical_csv_path)
         action = get_action_from_prompt(model_response)
 
         actions.append(action)
@@ -62,6 +62,8 @@ def choose_actions(agent, config, price_df, lookback):
     return pd.merge(result_df, price_df[['date', 'open', 'close']], on='date', how='left')
 
 def evaluate_actions(merged_df):
+
+    breakpoint()
     # Evaluate performance using next day's open/close
     profits = []
     for i in range(len(merged_df) - 1):
