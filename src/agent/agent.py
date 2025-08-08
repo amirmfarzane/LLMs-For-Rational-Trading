@@ -84,7 +84,7 @@ class GoldTradingAgent:
 
         self.react_graph = self.react_builder.compile()
 
-    def run(self, start_date: str, end_date: str, news_csv: str, gold_prices_csv: str) -> StrategyOutput:
+    def run(self, start_date: str, end_date: str, news_csv: str, numerical_csv: str) -> StrategyOutput:
         user_prompt = user_prompt = f"""
                 You are a trading assistant. Based on the daily technical indicators and gold price open/close values, decide whether the strategy for future day is:
                 - 2 → Buy
@@ -106,7 +106,7 @@ class GoldTradingAgent:
 
                 Here is the input data:
 
-                {get_technical_indicators_in_range_from_csv(start_date, end_date, gold_prices_csv)}
+                {get_technical_indicators_in_range_from_csv(start_date, end_date, numerical_csv)}
                 """
 
         input_msg = HumanMessage(content=user_prompt)
@@ -117,13 +117,19 @@ class GoldTradingAgent:
             msg.pretty_print()
         final_response = response["messages"][-1].content
         return final_response
-      
-  
+    
 if __name__ == "__main__":
 
     agent = GoldTradingAgent()
-    config = load_config("configs/numerical_feature_extractor.yaml")
+
+    with open("configs/run_pipline.yaml", 'r') as f:
+        config = yaml.safe_load(f)
     
-    news_csv = "2023.csv"
-    strategy_output = agent.run(config['start_date'], config['end_date'], news_csv, config['paths']['evaluation'])
+    strategy_output = agent.run(
+        start_date=config["dates"]["start_date"],
+        end_date=config["dates"]["end_date"],
+        news_csv=config["paths"]["news"],
+        numerical_csv=config["paths"]["evaluation"]
+    )
+
     print("hello")

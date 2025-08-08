@@ -4,10 +4,6 @@ import pandas as pd
 import yaml
 from src.agent.agent import GoldTradingAgent
 
-def load_config(path: str) -> dict:
-    with open(path, 'r') as f:
-        return yaml.safe_load(f)
-
 def get_action_from_prompt(prompt):
     match = re.search(r'"action"\s*:\s*(\d+)', prompt)
     if match:
@@ -21,8 +17,12 @@ def choose_actions(agent, config, price_df, lookback):
     Runs agent for each day using a rolling lookback window,
     gets decisions, and evaluates them based on next day's price movement.
     """
-    start_date = config['start_date']
-    end_date = config['end_date']
+    start_date = config["dates"]['start_date']
+    end_date = config["dates"]['end_date']
+    texts_csv_path = config['paths']['texts']
+    numerical_csv_path = config['paths']['evaluation']
+    lookback = config["hyps"]["lookback"]
+    price_df = pd.read_csv(config['paths']['evaluation'])
 
     actions = []
     dates = []
@@ -34,7 +34,7 @@ def choose_actions(agent, config, price_df, lookback):
         lookback_start = current_date - timedelta(days=lookback)
         lb_start_str = lookback_start.strftime("%Y-%m-%d")
         current_str = current_date.strftime("%Y-%m-%d")
-        model_response = agent.run(lb_start_str, current_str, config['paths']['texts'], config['paths']['evaluation'])
+        model_response = agent.run(lb_start_str, current_str, texts_csv_path, numerical_csv_path)
         action = get_action_from_prompt(model_response)
 
         actions.append(action)
@@ -107,11 +107,11 @@ def evaluate_actions(merged_df):
 if __name__ == "__main__":
 
     agent = GoldTradingAgent()
-    config = load_config("configs/run_pipeline.yaml")
     
-    lookback = 7
+    with open("configs/run_pipline.yaml", 'r') as file:
+        config = yaml.safe_load(file)
+    
+    
 
-    price_df = pd.read_csv(config['paths']['evaluation'])  # must include date, open, close
-
-    df = choose_actions(agent, config, price_df, lookback)
+    df = choose_actions(agent, config)
     evaluate_actions(df)
