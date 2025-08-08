@@ -33,7 +33,6 @@ def search_web__for_news_topic(news_topic:str, config:RunnableConfig):
             A string containing the content of the search news.
     
     """
-    breakpoint()
     search = DuckDuckGoSearchResults(backend="news", output_format="list", max_results=1)
     results = search.run(news_topic)
 

@@ -62,8 +62,6 @@ def choose_actions(agent, config):
     return pd.merge(result_df, price_df[['date', 'open', 'close']], on='date', how='left')
 
 def evaluate_actions(merged_df):
-
-    breakpoint()
     # Evaluate performance using next day's open/close
     profits = []
     for i in range(len(merged_df) - 1):
