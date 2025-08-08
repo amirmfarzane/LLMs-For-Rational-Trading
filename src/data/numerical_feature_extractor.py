@@ -11,12 +11,6 @@ from ta.volatility import BollingerBands, AverageTrueRange, DonchianChannel
 from ta.volume import OnBalanceVolumeIndicator
 from datetime import datetime
 
-
-def load_config(path: str) -> dict:
-    with open(path, 'r') as f:
-        return yaml.safe_load(f)
-
-
 def load_ohlcv(csv_path: str) -> pd.DataFrame:
     df = pd.read_csv(csv_path)
     df['date'] = pd.to_datetime(df['date'])
@@ -303,17 +297,18 @@ def evaluate_all_strategies(df: pd.DataFrame, short_win=10, long_win=30, rsi_thr
 
 
 def calc_strategies_features():
-    config = load_config("configs/numerical_feature_extractor.yaml")
+    with open("configs/run_pipline.yaml", 'r') as file:
+        config = yaml.safe_load(file)
 
     # Load and filter raw OHLCV data
     df = load_ohlcv(config['paths']['raw_data'])
-    df = df.loc[config['start_date']:config['end_date']]
+    df = df.loc[config["dates"]['start_date']:config["dates"]['end_date']]
 
-    features = config.get('features', {})
+    features = config.get('numerical_features', {})
 
     # ➕ Add returns
     df = calculate_returns(df, log=features.get('log_return', False), simple=features.get('simple_return', False))
-
+    
     # ➕ Add technical indicators
     if 'sma' in features:
         df = add_sma(df, features['sma'].get('periods', []))
@@ -373,7 +368,8 @@ def calc_strategies_features():
 
 def main():
     df = calc_strategies_features()
-    config = load_config("configs/numerical_feature_extractor.yaml")
+    with open("configs/run_pipline.yaml", 'r') as file:
+        config = yaml.safe_load(file)
 
     evaluation_df = evaluate_all_strategies(df, short_win=10, long_win=30, rsi_thresh=30)
 
