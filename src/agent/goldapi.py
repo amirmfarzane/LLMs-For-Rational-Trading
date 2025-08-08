@@ -90,7 +90,28 @@ def get_technical_indicators_in_range_from_csv(start_date: str, end_date: str, c
 
     return "\n".join(lines)
 
-# write_price_range_to_csv("2025-01-01", "2025-08-01", "gold_prices_2025.csv")
+
+def write_ohlcv_range_to_csv(start_date: str, end_date: str, filename: str = "gold_prices_ohlcv.csv") -> str:
+    """Fetches gold prices in a date range and writes OHLCV data to a CSV file."""
+    ex_end = (date.fromisoformat(end_date) + timedelta(days=1)).isoformat()
+    df = _get_hist(start_date, ex_end)
+
+    # Ensure required columns exist
+    expected_cols = ["Open", "High", "Low", "Close", "Volume"]
+    missing_cols = [col for col in expected_cols if col not in df.columns]
+    for col in missing_cols:
+        df[col] = None  # Fill with NaN if missing
+
+    df_out = df[expected_cols].copy()
+    df_out.index = df_out.index.date
+    df_out.reset_index(inplace=True)
+    df_out.rename(columns={"index": "Date"}, inplace=True)
+
+    df_out.to_csv(filename, index=False)
+    return f"Saved gold OHLCV data from {start_date} to {end_date} to {filename}"
+
+
+write_ohlcv_range_to_csv("2020-01-01", "2025-08-01","gold_ohlcv_2020_2025.csv")
 # print(get_open_close_by_date("2025-06-11"))
 # print(get_open_close_in_range("2025-07-01", "2025-07-14"))
 # print(get_price_relative(1))                             
