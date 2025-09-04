@@ -2,27 +2,61 @@ from langchain_core.tools import tool
 from langchain_core.runnables import RunnableConfig
 from langgraph.prebuilt import ToolNode
 import pandas as pd
+import os
+from dotenv import load_dotenv
+from langchain_openai import ChatOpenAI
 from langchain_community.tools import DuckDuckGoSearchResults
 
-@tool
-def get_date_important_news_topics(date:str, config:RunnableConfig):
-    """Provides The most important news topics for the given date
-        Args:
-            date: The date to get the important news from in format of YYYY-MM-DD
-        Returns:
-            A string containing the important news of the day.
-    """
-    csv_path = config["configurable"].get("news_path")
-    df  = pd.read_csv(csv_path)
-    matching_rows = df[df['date'] == date].head(5)
+load_dotenv()
 
+@tool
+def get_date_important_news_topics(date: str, config):
+    """Provides the top 7 most important news topics for the given date.
+    Args:
+        date: The date to get the important news from in format YYYY-MM-DD
+    Returns:
+        A string containing the top 7 important news of the day, cleaned and summarized.
+    """
+    os.environ["OPENAI_API_KEY"] = os.getenv("AVVALAI_API_KEY")
+    llm = ChatOpenAI(
+        model="gpt-4o-mini-2024-07-18",
+        base_url = "https://api.avalai.ir/v1",
+        temperature=1,
+        max_tokens=5000,
+    )
+    csv_path = config["configurable"].get("news_path")
+    df = pd.read_csv(csv_path)
+
+    matching_rows = df[df['date'] == date]
     if matching_rows.empty:
         return f"No news found for {date}"
 
-    result = []
-    for _, row in matching_rows.iterrows():      
-        result.append(row["link"].split("/")[-1])
-    return "\n".join(result)
+    news_texts = []
+    matching_rows = df[df['date'] == date].head(100)
+
+    for _, row in matching_rows.iterrows():
+        news_texts.append(f"Text: {row['news_text']}\n")
+
+    all_news_text = "\n\n".join(news_texts)
+    prompt = f"""
+        You are given a list of news articles for {date}. 
+        Your task:
+        1. Identify the 7 most important and most related news articles that will globaly effect the stock market prices.  
+        2. Return them as a list.  
+        3. Remove unnecessary/irrelevant parts of each article, keeping the essential information.  
+        4. Preserve the full meaning of each article (not just headlines).  
+
+        News articles:
+        {all_news_text}
+
+        Now, provide the cleaned list of the top 7 most important news articles:
+        """
+
+    response = llm.invoke(prompt)
+
+    return response.content
+
+
 
 @tool
 def search_web__for_news_topic(news_topic:str, config:RunnableConfig):
