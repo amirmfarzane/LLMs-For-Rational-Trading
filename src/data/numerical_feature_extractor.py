@@ -127,15 +127,15 @@ def add_time_features(df: pd.DataFrame):
 def label_by_open_close(df: pd.DataFrame, threshold: float = 0.001) -> pd.DataFrame:
     """
     Labels:
-        2 → Buy (close significantly > open)
+        1 → Buy (close significantly > open)
         0 → Sell (close significantly < open)
-        1 → Neutral
+        2 → Neutral
     """
     delta = (df['close'] - df['open']) / df['open']
     df['label'] = np.select(
         [delta > threshold, delta < -threshold],
         [1, 0],  # 1: Buy, 0: Sell
-        default=2  # 1: Neutral
+        default=2  # 2: Neutral
     )
     return df
 
