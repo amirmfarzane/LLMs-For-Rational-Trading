@@ -2,15 +2,15 @@ hyps:
   lookback: 30
 
 dates:
-  start_date: "2020-01-02 00:00:00"
-  end_date: "2025-08-01 00:00:00"
+  start_date: "2024-09-25 00:00:00"
+  end_date: "2024-12-01 00:00:00"
 
 
 paths:
   raw_data: "E:/UT/Term8/LLM/LLMs-For-Rational-Trading/data/gold_ohlcv_2020_2025.csv"
   processed_data: "data/processed_XAU_1d_data.csv"
   evaluation: "data/strategies_XAU_1d_data.csv"
-  news: "data/2025.csv"
+  news: "data/merged_news.csv"
 
 numerical_features:
   log_return: true

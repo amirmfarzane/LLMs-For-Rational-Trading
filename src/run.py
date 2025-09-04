@@ -116,6 +116,6 @@ if __name__ == "__main__":
         config = yaml.safe_load(file)
     
     
-
+    
     df = choose_actions(agent, config)
-    evaluate_actions(df)
+    df.to_csv("llm_results.csv")
