@@ -6,8 +6,8 @@ import os
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_community.tools import DuckDuckGoSearchResults
+from openai import OpenAI
 
-load_dotenv()
 
 @tool
 def get_date_important_news_topics(date: str, config):
@@ -18,12 +18,9 @@ def get_date_important_news_topics(date: str, config):
         A string containing the top 7 important news of the day, cleaned and summarized.
     """
     os.environ["OPENAI_API_KEY"] = os.getenv("AVVALAI_API_KEY")
-    llm = ChatOpenAI(
-        model="gpt-4o-mini-2024-07-18",
-        base_url = "https://api.avalai.ir/v1",
-        temperature=1,
-        max_tokens=5000,
-    )
+
+
+    client =  config["configurable"].get("client")
     csv_path = config["configurable"].get("news_path")
     df = pd.read_csv(csv_path)
 
@@ -52,9 +49,16 @@ def get_date_important_news_topics(date: str, config):
         Now, provide the cleaned list of the top 7 most important news articles:
         """
 
-    response = llm.invoke(prompt)
-
-    return response.content
+    response = client.chat.completions.create(
+        model="gemini-2.5-flash",
+        messages=[
+            {
+                "role": "user",
+                "content": prompt,
+            },
+        ],
+    )
+    return response.choices[0].message.content
 
 
 
@@ -77,4 +81,11 @@ def search_web__for_news_topic(news_topic:str, config:RunnableConfig):
     return f"{top_result['title']}\n{top_result['link']}"
 
 
-#TODO:(AmirMahdi) add the market state
+
+# load_dotenv()
+# os.environ["OPENAI_API_KEY"] = os.getenv("AVVALAI_API_KEY")
+# client = OpenAI(
+#     api_key= os.environ["OPENAI_API_KEY"], 
+#     base_url="https://api.avalai.ir/v1",
+# )
+# get_date_important_news_topics("2022-01-01", {"configurable":{"news_path":"merged_news.csv","client":client}})

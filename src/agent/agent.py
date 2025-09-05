@@ -67,6 +67,10 @@ class GoldTradingAgent:
             temperature=1,
             max_tokens=5000,
         )
+        self.client = OpenAI(
+            api_key= os.environ["OPENAI_API_KEY"], 
+            base_url="https://api.avalai.ir/v1",
+        )
         self.llm = self.llm.bind_tools([search_web__for_news_topic, get_date_important_news_topics])
             
         def agent_node(state: MessagesState) -> MessagesState:   
@@ -115,7 +119,7 @@ class GoldTradingAgent:
                 """
 
         input_msg = HumanMessage(content=user_prompt)
-        input_config = {"configurable": {"news_path": news_csv}}
+        input_config = {"configurable": {"news_path": news_csv,"client":self.client}}
 
         response = self.react_graph.invoke(MessagesState(messages=[input_msg]), config=input_config)
         for msg in response["messages"]:
