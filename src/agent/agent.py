@@ -93,9 +93,9 @@ class GoldTradingAgent:
     def run(self, start_date: str, end_date: str, news_csv: str, numerical_csv: str) -> StrategyOutput:
         user_prompt = user_prompt = f"""
                 You are a trading assistant. Based on the daily technical indicators and gold price open/close values, decide whether the strategy for future day is:
-                - 2 → Buy
-                - 1 → Sell
-                - 0 → Neutral (Wait)
+                - 1 → Buy
+                - 0 → Sell
+                - 2 → Neutral (Wait)
 
                 Use these indicators to help you:
                 - **SMA & EMA crossover**: Buy if short > long, Sell if short < long.

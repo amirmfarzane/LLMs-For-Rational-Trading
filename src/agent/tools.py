@@ -10,7 +10,7 @@ from openai import OpenAI
 
 
 @tool
-def get_date_important_news_topics(date: str, config):
+def get_date_important_news_topics(date: str, config:RunnableConfig):
     """Provides the top 7 most important news topics for the given date.
     Args:
         date: The date to get the important news from in format YYYY-MM-DD
