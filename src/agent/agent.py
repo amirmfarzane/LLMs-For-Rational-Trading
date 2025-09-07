@@ -115,7 +115,7 @@ class GoldTradingAgent:
                 {get_technical_indicators_in_range_from_csv(start_date, end_date, numerical_csv)}
                 
                 ALWAYS USE ALL THE TOOLS ALSO SEARCH THE WEB FOR GETTING NEWS CONTENT
-                USE LAST THREE DAYS NEWS
+                USE ONLY THE LAST TWO DAYS NEWS.
                 """
 
         input_msg = HumanMessage(content=user_prompt)
