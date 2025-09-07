@@ -122,8 +122,8 @@ class GoldTradingAgent:
         input_config = {"configurable": {"news_path": news_csv,"client":self.client}}
 
         response = self.react_graph.invoke(MessagesState(messages=[input_msg]), config=input_config)
-        for msg in response["messages"]:
-            msg.pretty_print()
+        # for msg in response["messages"]:
+        #     msg.pretty_print()
         final_response = response["messages"][-1].content
         return final_response
     
