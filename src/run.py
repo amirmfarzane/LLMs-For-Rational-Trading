@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 import re 
-import pandas as pd
 import yaml
 from src.agent.agent import GoldTradingAgent
 import pickle
@@ -38,15 +37,15 @@ def choose_actions(agent, config):
         lookback_start = current_date - timedelta(days=lookback)
         lb_start_str = lookback_start.strftime("%Y-%m-%d")
         current_str = current_date.strftime("%Y-%m-%d")
-        model_response = agent.run(lb_start_str, current_str, numerical_csv_path)
+        model_response = agent.run(lb_start_str, current_str, news_csv_path, numerical_csv_path, "SIMPLE")
         dates.append(current_str)
         model_responses.append(model_response)
         print(f"### Current data: {current_str} ###")
 
-        with open('trader_results/model_responses_numeric.pkl', 'wb') as f:
-            pickle.dump(model_responses, f)
-        with open('trader_results/dates_numeric.pkl', 'wb') as f:
-            pickle.dump(dates, f)
+        # with open('trader_results/model_responses_numeric.pkl', 'wb') as f:
+        #     pickle.dump(model_responses, f)
+        # with open('trader_results/dates_numeric.pkl', 'wb') as f:
+        #     pickle.dump(dates, f)
 
         current_date += timedelta(days=1)
 

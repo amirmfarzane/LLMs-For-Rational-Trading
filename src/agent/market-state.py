@@ -54,4 +54,4 @@ def generate_paragraphs_for_dates(dates):
     return [generate_economics_paragraph(date) for date in dates]
 
 # Example usage
-# print(generate_economics_paragraph('2025-08-01'))
+print(generate_economics_paragraph('2025-08-01'))

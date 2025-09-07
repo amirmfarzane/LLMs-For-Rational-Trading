@@ -1,10 +1,8 @@
 from langchain_core.tools import tool
 from langchain_core.runnables import RunnableConfig
-from langgraph.prebuilt import ToolNode
 import pandas as pd
 import os
 from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI
 from langchain_community.tools import DuckDuckGoSearchResults
 from openai import OpenAI
 
@@ -82,10 +80,3 @@ def search_web__for_news_topic(news_topic:str, config:RunnableConfig):
 
 
 
-# load_dotenv()
-# os.environ["OPENAI_API_KEY"] = os.getenv("AVVALAI_API_KEY")
-# client = OpenAI(
-#     api_key= os.environ["OPENAI_API_KEY"], 
-#     base_url="https://api.avalai.ir/v1",
-# )
-# get_date_important_news_topics("2022-01-01", {"configurable":{"news_path":"merged_news.csv","client":client}})

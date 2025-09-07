@@ -1,6 +1,4 @@
-from datetime import datetime, timedelta
 import os
-import re 
 from langchain_openai import ChatOpenAI
 from langgraph.graph import MessagesState, StateGraph, START
 from langgraph.prebuilt import tools_condition
@@ -11,8 +9,7 @@ from src.agent.goldapi import get_technical_indicators_in_range_from_csv
 from pydantic import BaseModel
 from typing import List, Literal
 import yaml
-import random
-import httpx
+from langgraph.prebuilt import ToolNode
 
 class TradeStrategy(BaseModel):
     date: str  # e.g., "2025-07-01"

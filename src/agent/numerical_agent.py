@@ -1,4 +1,3 @@
-from datetime import datetime, timedelta
 import os
 import yaml
 from langchain_openai import ChatOpenAI
@@ -6,21 +5,14 @@ from langchain_core.messages import HumanMessage
 from src.agent.goldapi import get_technical_indicators_in_range_from_csv
 from pydantic import BaseModel
 from typing import List, Literal
-from datetime import datetime, timedelta
 import os
-import re 
 from langchain_openai import ChatOpenAI
-from langgraph.graph import MessagesState, StateGraph, START
-from langgraph.prebuilt import tools_condition
 from langchain_core.messages import HumanMessage
-from typing_extensions import TypedDict
 from src.agent.tools import *
 from src.agent.goldapi import get_technical_indicators_in_range_from_csv
 from pydantic import BaseModel
 from typing import List, Literal
 import yaml
-import random
-import httpx
 
 class TradeStrategy(BaseModel):
     date: str

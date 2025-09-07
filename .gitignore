@@ -5,5 +5,6 @@ data/numerical/archive/
 gdelt_data.db
 .env
 *.json
+*.PKL
 *.csv
 clusters.json

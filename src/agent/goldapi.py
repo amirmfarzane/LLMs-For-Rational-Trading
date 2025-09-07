@@ -1,6 +1,6 @@
 import yfinance as yf
 from datetime import date, timedelta
-from typing import Union, Optional
+from typing import Optional
 
 GOLD = yf.Ticker("GC=F")
 
@@ -112,8 +112,3 @@ def write_ohlcv_range_to_csv(start_date: str, end_date: str, filename: str = "go
 
 
 write_ohlcv_range_to_csv("2020-01-01", "2025-08-01","gold_ohlcv_2020_2025.csv")
-# print(get_open_close_by_date("2025-06-11"))
-# print(get_open_close_in_range("2025-07-01", "2025-07-14"))
-# print(get_price_relative(1))                             
-# print(get_range_relative(days_ago=2))
-# print(get_open_close_in_range_from_csv("2025-07-01", "2025-07-14","gold_prices_2025.csv"))
