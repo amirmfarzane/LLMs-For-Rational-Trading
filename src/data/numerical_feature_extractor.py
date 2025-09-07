@@ -287,7 +287,7 @@ def evaluate_all_strategies(df: pd.DataFrame, short_win=10, long_win=30, rsi_thr
 
     strategy_df['final_decision'] = np.select(
         [buy_votes > sell_votes, sell_votes > buy_votes],
-        [2, 1], default=0
+        [1, 0], default=2
     )
 
     # strategy_df['open'] = df['open']
