@@ -90,8 +90,8 @@ class GoldTradingAgent:
 
         self.react_graph = self.react_builder.compile()
 
-    def run(self, start_date: str, end_date: str, news_csv: str, numerical_csv: str) -> StrategyOutput:
-        user_prompt = user_prompt = f"""
+    def run(self, start_date: str, end_date: str, news_csv: str, numerical_csv: str, inference_type: str) -> StrategyOutput:
+        simple_user_prompt = f"""
                 You are a trading assistant. Based on the daily technical indicators and gold price open/close values, decide whether the strategy for future day is:
                 - 1 → Buy
                 - 0 → Sell
@@ -117,7 +117,63 @@ class GoldTradingAgent:
                 ALWAYS USE ALL THE TOOLS ALSO SEARCH THE WEB FOR GETTING NEWS CONTENT
                 USE ONLY THE LAST TWO DAYS NEWS.
                 """
+        COT_user_prompt = f"""
+                You are a trading assistant. Based on the daily technical indicators and gold price open/close values, decide whether the strategy for future day is:
+                - 1 → Buy
+                - 0 → Sell
+                - 2 → Neutral (Wait)
 
+                Use these indicators to help you:
+                - **SMA & EMA crossover**: Buy if short > long, Sell if short < long.
+                - **MACD**: Buy if MACD > Signal, Sell if MACD < Signal.
+                - **RSI**: Buy if RSI < 30, Sell if RSI > 70.
+                - **Bollinger Bands**: Buy if close < lower band, Sell if close > upper band.
+                - **Stochastic Oscillator**: Buy if %K < 20 and rising above %D, Sell if %K > 80 and falling below %D.
+
+                ### Step-by-step Reasoning Process (Chain of Thought):
+
+                1.  **Evaluate Each Technical Indicator:** Apply each technical analysis strategy provided in the input prompt (e.g., RSI, MACD, Moving Averages). For each indicator, determine its individual signal: Buy, Sell, or Neutral/Wait. Tally the results to establish a preliminary score.
+
+                2.  **Incorporate External Factors:** Search the web for the most relevant gold-related news from the last two days. Analyze the headlines and summaries to gauge market sentiment. Categorize the overall news tone as Bullish (e.g., economic uncertainty, inflation data), Bearish (e.g., strong dollar, rising yields), or Neutral.
+
+                3.  **Integrate All Signals:** Synthesize the technical indicator score with the news sentiment. A strong consensus from indicators can be reinforced or contradicted by news; conflicting indicators require heavier weighting of the news context.
+
+                4.  **Analyze Scenarios with Different Focuses:** Formulate at least three distinct potential decisions by emphasizing different input variables:
+                    -   **Technical-Focused Decision:** Prioritize the signals from the majority of indicators, potentially overlooking minor news.
+                    -   **News-Driven Decision:** Prioritize the prevailing market sentiment from recent news, potentially overriding mixed technical signals.
+                    -   **Risk-Averse Decision:** Favor a "Wait" or neutral stance in cases of strong conflict between technicals and news or high market uncertainty.
+
+                5.  **Make a Final Decision:** Based on the integrated analysis and scenario evaluation, choose the most prudent action:
+                    -   `0` for **Sell**
+                    -   `1` for **Buy**
+                    -   `2` for **Wait**
+                    The final reasoning must explicitly reference both the technical indicators and the news sentiment.
+
+                Give your answer in this format:
+                {{
+                "explanation": "A detailed explanation of how indicators influenced your strategy.",
+                "action":Based on the data from all the days provided, determine the action (buy, sell, or wait) for the single day immediately following the last given date
+                }}
+
+                Here is the input data:
+
+                {get_technical_indicators_in_range_from_csv(start_date, end_date, numerical_csv)}
+                
+                ALWAYS USE ALL THE TOOLS ALSO SEARCH THE WEB FOR GETTING NEWS CONTENT
+                USE ONLY THE LAST TWO DAYS NEWS.
+                """
+        
+        FEWSHOT_use_prompt = f""
+
+        if(inference_type == "SIMPLE"):
+            user_prompt = simple_user_prompt
+        elif(inference_type == "COT"):
+            user_prompt = COT_user_prompt
+        elif(inference_type == "FEW-SHOT"):
+            user_prompt = FEWSHOT_use_prompt
+        else:
+            raise ValueError(f"Inference type '{inference_type}' is not valid. "
+                     f"Valid options are: SIMPLE, COT, FEW-SHOT")
         input_msg = HumanMessage(content=user_prompt)
         input_config = {"configurable": {"news_path": news_csv,"client":self.client}}
 
@@ -138,7 +194,7 @@ if __name__ == "__main__":
         start_date=config["dates"]["start_date"],
         end_date=config["dates"]["end_date"],
         news_csv=config["paths"]["news"],
-        numerical_csv=config["paths"]["evaluation"]
+        numerical_csv=config["paths"]["evaluation"],
     )
 
     print("hello")
