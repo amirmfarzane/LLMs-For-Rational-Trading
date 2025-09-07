@@ -62,14 +62,14 @@ class GoldTradingAgent:
         load_dotenv()
         os.environ["OPENAI_API_KEY"] = os.getenv("AVVALAI_API_KEY")
         self.llm = ChatOpenAI(
-            model="gpt-4o-mini-2024-07-18",
-            base_url = "https://api.avalai.ir/v1",
+            model="gpt-4o-mini",
+            base_url='https://api.gapgpt.app/v1',
             temperature=1,
             max_tokens=5000,
         )
         self.client = OpenAI(
             api_key= os.environ["OPENAI_API_KEY"], 
-            base_url="https://api.avalai.ir/v1",
+            base_url='https://api.gapgpt.app/v1',
         )
         self.llm = self.llm.bind_tools([search_web__for_news_topic, get_date_important_news_topics])
             
@@ -122,8 +122,8 @@ class GoldTradingAgent:
         input_config = {"configurable": {"news_path": news_csv,"client":self.client}}
 
         response = self.react_graph.invoke(MessagesState(messages=[input_msg]), config=input_config)
-        for msg in response["messages"]:
-            msg.pretty_print()
+        # for msg in response["messages"]:
+        #     msg.pretty_print()
         final_response = response["messages"][-1].content
         return final_response
     
