@@ -29,11 +29,6 @@ def choose_actions(agent, config):
 
     dates = []
     model_responses = []
-    # with open("E:/UT/Term8/LLM/LLMs-For-Rational-Trading/trader_results/dates.pkl", "rb") as f:   # "rb" = read in binary mode
-    #     dates = pickle.load(f)
-    # with open("E:/UT/Term8/LLM/LLMs-For-Rational-Trading/trader_results/model_responses.pkl", "rb") as f:   # "rb" = read in binary mode
-    #     model_responses = pickle.load(f)
-    
 
     current_date = datetime.strptime(start_date, "%Y-%m-%d %H:%M:%S") + timedelta(days=lookback)
     end_date_dt = datetime.strptime(end_date, "%Y-%m-%d %H:%M:%S")
@@ -43,14 +38,14 @@ def choose_actions(agent, config):
         lookback_start = current_date - timedelta(days=lookback)
         lb_start_str = lookback_start.strftime("%Y-%m-%d")
         current_str = current_date.strftime("%Y-%m-%d")
-        model_response = agent.run(lb_start_str, current_str, news_csv_path, numerical_csv_path, "COT")
+        model_response = agent.run(lb_start_str, current_str, numerical_csv_path)
         dates.append(current_str)
         model_responses.append(model_response)
         print(f"### Current data: {current_str} ###")
 
-        with open('trader_results/model_responses.pkl', 'wb') as f:
+        with open('trader_results/model_responses_numeric.pkl', 'wb') as f:
             pickle.dump(model_responses, f)
-        with open('trader_results/dates.pkl', 'wb') as f:
+        with open('trader_results/dates_numeric.pkl', 'wb') as f:
             pickle.dump(dates, f)
 
         current_date += timedelta(days=1)

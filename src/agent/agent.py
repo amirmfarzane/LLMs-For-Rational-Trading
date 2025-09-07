@@ -163,13 +163,73 @@ class GoldTradingAgent:
                 USE ONLY THE LAST TWO DAYS NEWS.
                 """
         
-        FEWSHOT_use_prompt = f""
+        FEWSHOT_use_prompt = f"""
+                You are a trading assistant. Based on the daily technical indicators and gold price open/close values, decide whether the strategy for future day is:
+                - 1 → Buy
+                - 0 → Sell
+                - 2 → Neutral (Wait)
+
+                Use these indicators to help you:
+                - **SMA & EMA crossover**: Buy if short > long, Sell if short < long.
+                - **MACD**: Buy if MACD > Signal, Sell if MACD < Signal.
+                - **RSI**: Buy if RSI < 30, Sell if RSI > 70.
+                - **Bollinger Bands**: Buy if close < lower band, Sell if close > upper band.
+                - **Stochastic Oscillator**: Buy if %K < 20 and rising above %D, Sell if %K > 80 and falling below %D.
+
+                Give your answer in this format:
+                {{
+                "explanation": "A detailed explanation of how indicators influenced your strategy.",
+                "action":Based on the data from all the days provided, determine the action (buy, sell, or wait) for the single day immediately following the last given date
+                }}
+
+                Here is the input data:
+
+                {get_technical_indicators_in_range_from_csv(start_date, end_date, numerical_csv)}
+
+                I give some examples
+
+                • Example 1  
+                Input Data:  
+                • 2020-01-10: open = 2840.50, close = 2875.20, sma_cross = 1, ema_cross = 1, rsi_signal = 0, macd_signal = 1, bollinger_signal = 0, stoch_signal = 0, williams_signal = 1, cci_signal = 1, roc_signal = 1, adx_trend = 1, vortex_signal = 1, obv_signal = 1, final_decision = 1  
+                • 2020-01-13: open = 2870.30, close = 2882.90, sma_cross = 1, ema_cross = 1, rsi_signal = 0, macd_signal = 1, bollinger_signal = 0, stoch_signal = 0, williams_signal = 1, cci_signal = 1, roc_signal = 1, adx_trend = 1, vortex_signal = 1, obv_signal = 1, final_decision = 1  
+                News (last two days): Dollar weakens, geopolitical tensions rise.  
+                Output:  
+                {{
+                "explanation": "Most indicators show bullish momentum, and supportive news confirms upside potential.",
+                "action": 1
+                }}
+
+                • Example 2  
+                Input Data:  
+                • 2020-01-20: open = 2910.70, close = 2888.40, sma_cross = 0, ema_cross = 0, rsi_signal = 1, macd_signal = 0, bollinger_signal = 1, stoch_signal = 1, williams_signal = 0, cci_signal = 0, roc_signal = 0, adx_trend = 0, vortex_signal = 0, obv_signal = 0, final_decision = 0  
+                • 2020-01-21: open = 2887.50, close = 2865.90, sma_cross = 0, ema_cross = 0, rsi_signal = 1, macd_signal = 0, bollinger_signal = 1, stoch_signal = 1, williams_signal = 0, cci_signal = 0, roc_signal = 0, adx_trend = 0, vortex_signal = 0, obv_signal = 0, final_decision = 0  
+                News (last two days): Strong US jobs data, Treasury yields higher.  
+                Output:  
+                {{
+                "explanation": "Indicators point to overbought and weakening momentum. News is bearish, confirming a sell bias.",
+                "action": 0
+                }}
+
+                • Example 3  
+                Input Data:  
+                • 2020-01-27: open = 2855.00, close = 2860.40, sma_cross = 0, ema_cross = 0, rsi_signal = 2, macd_signal = 2, bollinger_signal = 2, stoch_signal = 2, williams_signal = 2, cci_signal = 2, roc_signal = 2, adx_trend = 2, vortex_signal = 2, obv_signal = 2, final_decision = 2  
+                • 2020-01-28: open = 2862.30, close = 2861.10, sma_cross = 0, ema_cross = 0, rsi_signal = 2, macd_signal = 2, bollinger_signal = 2, stoch_signal = 2, williams_signal = 2, cci_signal = 2, roc_signal = 2, adx_trend = 2, vortex_signal = 2, obv_signal = 2, final_decision = 2  
+                News (last two days): Mixed signals—Fed minutes neutral, inflation data stable.  
+                Output:  
+                {{
+                "explanation": "Technical indicators are flat/neutral and news offers no strong direction. Waiting is prudent.",
+                "action": 2
+                }}
+                
+                ALWAYS USE ALL THE TOOLS ALSO SEARCH THE WEB FOR GETTING NEWS CONTENT
+                USE ONLY THE LAST TWO DAYS NEWS.
+                """
 
         if(inference_type == "SIMPLE"):
             user_prompt = simple_user_prompt
         elif(inference_type == "COT"):
             user_prompt = COT_user_prompt
-        elif(inference_type == "FEW-SHOT"):
+        elif(inference_type == "FEWSHOT"):
             user_prompt = FEWSHOT_use_prompt
         else:
             raise ValueError(f"Inference type '{inference_type}' is not valid. "
