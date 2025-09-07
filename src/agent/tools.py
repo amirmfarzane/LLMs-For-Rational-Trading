@@ -50,7 +50,7 @@ def get_date_important_news_topics(date: str, config:RunnableConfig):
         """
 
     response = client.chat.completions.create(
-        model="gemini-2.5-flash",
+        model="gemini-2.0-flash-001",
         messages=[
             {
                 "role": "user",
