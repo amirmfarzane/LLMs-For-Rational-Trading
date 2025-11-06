@@ -13,7 +13,7 @@ By combining **textual signals** (from financial news, political speeches, and s
 
 - 🧠 **Hybrid Modeling**  
   - **XGBoost** for structured + textual features.  
-  - **ReAct LLM Agent** for reasoning-based decisions.  
+  - **ReAct LLM Agent** for reasoning-based decision-making using few-shot prompting and chain-of-thought strategies.
 
 - 🗣️ **Explainable Decisions**  
   - **SHAP** values for feature attribution.  
